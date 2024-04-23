@@ -20,6 +20,7 @@ namespace Tao3D
 class Application
 {
 public:
+	Application();
 	~Application() { }
 	static Application& Instance();
 
@@ -53,8 +54,6 @@ public:
 	void exec();
 	void quit();
 
-private:
-	Application();
 
 private:
 	static Application* self;
