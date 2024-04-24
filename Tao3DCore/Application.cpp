@@ -18,6 +18,12 @@ void Application::init(int width, int height, LPCSTR title, bool fullScreen)
 	m_pRender->init(width, height);
 	m_mouse.SetWindow(m_pWindow->getHwnd());
 }
+void Application::resize(int width, int height) 
+{
+	m_pWindow->resize(width, height);
+	m_resources.resize(width, height);
+	m_pRender->resize(width, height);
+}
 void Application::setWindow(IWindow* window)
 {
 	m_pWindow = window;
@@ -44,8 +50,15 @@ void Application::exec()
 		{
 			done = true;
 		}
+		else if (msg.message == WM_SIZE)
+		{
+			UINT width	= LOWORD(msg.lParam);
+			UINT height = HIWORD(msg.lParam);
+			resize(width, height);
+		}
 		else
 		{
+	
 			gResource.beginScene();
 			m_pRender->update();
 			result = m_pRender->render();

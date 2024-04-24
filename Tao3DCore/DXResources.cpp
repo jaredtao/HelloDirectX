@@ -1,11 +1,30 @@
 #include "DXResources.h"
+#include "Application.h"
 #include "Common.h"
+#include <chrono>
+#include <format>
 namespace Tao3D
 {
+static inline bool isDeviceLostError(HRESULT errorCode)
+{
+	switch (errorCode)
+	{
+		case DXGI_ERROR_DEVICE_RESET:
+		case DXGI_ERROR_DEVICE_REMOVED:
+		case DXGI_ERROR_DEVICE_HUNG:
+		case DXGI_ERROR_DRIVER_INTERNAL_ERROR:
+		case DXGI_ERROR_NOT_CURRENTLY_AVAILABLE:
+			return true;
+		default:
+			return false;
+	}
+}
 bool DXResources::init(int screenWidth, int screenHeight, HWND hwnd, bool fullScreen)
 {
 	m_screenWidth  = screenWidth;
 	m_screenHeight = screenHeight;
+	m_hwnd		   = hwnd;
+	m_fullScreen   = fullScreen;
 	initRefreshRate();
 	initSwapChain(hwnd, fullScreen);
 	initDepthStencilBuffer();
@@ -18,7 +37,37 @@ bool DXResources::init(int screenWidth, int screenHeight, HWND hwnd, bool fullSc
 }
 void DXResources::uninit()
 {
-	m_swapChain->SetFullscreenState(false, nullptr);
+	if (m_swapChain)
+	{
+		m_swapChain->SetFullscreenState(false, nullptr);
+	}
+
+	m_swapChain					 = nullptr;
+	m_device					 = nullptr;
+	m_context					 = nullptr;
+	m_targetView				 = nullptr;
+	m_depthStencilBuffer		 = nullptr;
+	m_depthStencilState			 = nullptr;
+	m_depthDisabledStencilState	 = nullptr;
+	m_depthStencilView			 = nullptr;
+	m_rasterState				 = nullptr;
+	m_backBuffer				 = nullptr;
+	m_alphaEnabledBlendingState	 = nullptr;
+	m_alphaDisabledBlendingState = nullptr;
+}
+void DXResources::resize(int width, int height)
+{
+	m_screenWidth  = width;
+	m_screenHeight = height;
+	if (!ensureDeviceValid())
+	{
+		return;
+	}
+	HRESULT hr	   = m_swapChain->ResizeBuffers(1, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
+	if (isDeviceLostError(hr))
+	{
+		handleDeviceLost();
+	}
 }
 void DXResources::setClearColor(float r, float g, float b, float a)
 {
@@ -29,35 +78,144 @@ void DXResources::setClearColor(float r, float g, float b, float a)
 }
 void DXResources::beginScene()
 {
+	if (!ensureDeviceValid())
+	{
+		return;
+	}
 	m_context->ClearRenderTargetView(m_targetView.Get(), m_clearColor);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
+bool DXResources::ensureDeviceValid() 
+{
+	if (testDeviceLost())
+	{
+		if (!testDeviceResetable())
+		{
+			return false;
+		}
+		if (!tryResetDevice())
+		{
+			return false;
+		}
+	}
+	return true;
+}
 void DXResources::endScene()
 {
+	if (!ensureDeviceValid())
+	{
+		return;
+	}
+
 	if (m_vsyncEnabled)
 	{
 		m_swapChain->Present(1, 0);
 	}
 	else
 	{
-		m_swapChain->Present(0, 0);
+		HRESULT hr = m_swapChain->Present(0, 0);
+		if (isDeviceLostError(hr))
+		{
+			handleDeviceLost();
+		}
+	}
+}
+
+bool DXResources::testDeviceLost()
+{
+	bool lost = false;
+	if (!m_device)
+	{
+		return true;
+	}
+	HRESULT result = m_device->GetDeviceRemovedReason();
+	lost		   = isDeviceLostError(result);
+	if (lost)
+	{
+		OutputDebugStringA(std::format("D3D11 device was removed {:#X}", result).c_str());
+	}
+	return lost;
+}
+bool DXResources::testDeviceResetable()
+{
+	ID3D11Device*		 dummyDevice;
+	D3D_FEATURE_LEVEL	 dummyFeatureLevel;
+	ID3D11DeviceContext* dummyContext;
+	UINT				 flags		  = 0;
+	D3D_FEATURE_LEVEL	 featureLevel = D3D_FEATURE_LEVEL_11_0;
+	HRESULT				 result		  = D3D11CreateDevice(
+		   nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, &featureLevel, 1, D3D11_SDK_VERSION, &dummyDevice, &dummyFeatureLevel, &dummyContext);
+
+	if (!dummyDevice || FAILED(result))
+	{
+		return false;
+	}
+	SafeRelease(dummyContext);
+	SafeRelease(dummyDevice);
+}
+void DXResources::handleDeviceLost()
+{
+	m_deviceLost   = true;
+	HRESULT reason = m_device->GetDeviceRemovedReason();
+#if defined(_DEBUG)
+	OutputDebugStringA(
+		std::format("[{} {} line:{}] Device removed! DXGI_ERROR code: {:#X}\n", std::chrono::system_clock::now(), __FILE__, __LINE__, reason).c_str());
+#endif
+	gApp.notifyDeviceState(true);
+	uninit();
+}
+bool DXResources::tryResetDevice()
+{
+	try
+	{
+		initRefreshRate();
+		initSwapChain(m_hwnd, m_fullScreen);
+		initDepthStencilBuffer();
+		initRenderTarget();
+		initRaster();
+		initViewPort();
+		initMatrix();
+		initBlend();
+		gApp.notifyDeviceState(false);
+		return true;
+	}
+	catch (std::exception e)
+	{
+		OutputDebugStringA(e.what());
+		return false;
 	}
 }
 void DXResources::turnZBufferOn()
 {
+	if (!m_context)
+	{
+		return;
+	}
 	m_context->OMSetDepthStencilState(m_depthStencilState.Get(), 1);
 }
 void DXResources::turnZBufferOff()
 {
+	if (!m_context)
+	{
+		return;
+	}
 	m_context->OMSetDepthStencilState(m_depthDisabledStencilState.Get(), 1);
 }
 void DXResources::turnAlphaBlendingOn()
 {
+	if (!m_context)
+	{
+		return;
+	}
 	float blendFactor[4] = { 0 };
 	m_context->OMSetBlendState(m_alphaEnabledBlendingState.Get(), blendFactor, 0xffffffff);
 }
 void DXResources::turnAlphaBlendingOff()
 {
+	if (!m_context)
+	{
+		return;
+	}
 	float blendFactor[4] = { 0 };
 	m_context->OMSetBlendState(m_alphaDisabledBlendingState.Get(), blendFactor, 0xffffffff);
 }
@@ -139,7 +297,7 @@ void DXResources::initRefreshRate()
 	ThrowIfFailed(adapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, modeList), "GetDisplayModeList");
 	for (unsigned int i = 0; i < numModes; ++i)
 	{
-		if (modeList[i].Width == m_screenWidth && modeList[i].Height == m_screenHeight)
+		if ((modeList[i].Width == m_screenWidth) && (modeList[i].Height == m_screenHeight))
 		{
 			m_numerator	  = modeList[i].RefreshRate.Numerator;
 			m_denominator = modeList[i].RefreshRate.Denominator;

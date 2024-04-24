@@ -21,12 +21,12 @@ public:
 	static LRESULT CALLBACK MessageRouter(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 
 private:
-	int		  m_w;
-	int		  m_h;
-	LPCSTR	  m_title;
-	bool	  m_fullScreen = false;
-	LPCSTR	  m_applicationName;
-	HINSTANCE m_hInstance;
-	HWND	  m_hwnd;
+	int		  m_w				= 0;
+	int		  m_h				= 0;
+	LPCSTR	  m_title			= nullptr;
+	bool	  m_fullScreen		= false;
+	LPCSTR	  m_applicationName = nullptr;
+	HINSTANCE m_hInstance		= nullptr;
+	HWND	  m_hwnd			= nullptr;
 };
 } // namespace Tao3D

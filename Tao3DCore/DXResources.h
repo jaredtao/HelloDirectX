@@ -30,9 +30,14 @@ class DXResources
 public:
 	bool		  init(int screenWidth, int screenHeight, HWND hwnd, bool fullScreen);
 	void		  uninit();
+	void		  resize(int width, int height);
 	void		  setClearColor(float r, float g, float b, float a);
 	void		  beginScene();
 	void		  endScene();
+
+	bool ensureDeviceValid();
+	
+
 	ID3D11Device* getDevice()
 	{
 		return m_device.Get();
@@ -60,6 +65,7 @@ public:
 	void turnAlphaBlendingOn();
 	void turnAlphaBlendingOff();
 
+
 protected:
 	void initSwapChain(HWND hwnd, bool fullScreen);
 	void initMatrix();
@@ -70,9 +76,17 @@ protected:
 	void initViewPort();
 	void initBlend();
 
+	void handleDeviceLost();
+
+	bool testDeviceLost();
+	bool testDeviceResetable();
+	bool tryResetDevice();
+
 private:
-	int m_screenWidth;
-	int m_screenHeight;
+	int								m_screenWidth				= 0;
+	int								m_screenHeight				= 0;
+	HWND							m_hwnd						= nullptr;
+	bool							m_fullScreen				= false;
 
 	ComPtr<IDXGISwapChain>			m_swapChain					= nullptr;
 	ComPtr<ID3D11Device>			m_device					= nullptr;
@@ -84,9 +98,9 @@ private:
 	ComPtr<ID3D11DepthStencilView>	m_depthStencilView			= nullptr;
 	ComPtr<ID3D11RasterizerState>	m_rasterState				= nullptr;
 	ComPtr<ID3D11Texture2D>			m_backBuffer				= nullptr;
-
 	ComPtr<ID3D11BlendState> m_alphaEnabledBlendingState  = nullptr;
 	ComPtr<ID3D11BlendState> m_alphaDisabledBlendingState = nullptr;
+
 	unsigned int			 m_numerator;
 	unsigned int			 m_denominator;
 	bool					 m_vsyncEnabled = false;
@@ -96,6 +110,8 @@ private:
 	Matrix					 m_world;
 	Matrix					 m_ortho;
 	float					 m_clearColor[4] = { 0.2f, 0.3f, 0.4f, 1.0f };
+
+	bool m_deviceLost = false;
 };
 
 } // namespace Tao3D

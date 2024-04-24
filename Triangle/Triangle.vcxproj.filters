@@ -12,43 +12,28 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Tao3DCore\Application.cpp">
-      <Filter>Tao3DCore</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Tao3DCore\DXResources.cpp">
-      <Filter>Tao3DCore</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Tao3DCore\MainWindow.cpp">
-      <Filter>Tao3DCore</Filter>
-    </ClCompile>
     <ClCompile Include="Src\main.cpp">
       <Filter>Src</Filter>
     </ClCompile>
     <ClCompile Include="Src\TriangleRender.cpp">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="$(SolutionDir)Tao3DCore\Application.cpp" />
+    <ClCompile Include="$(SolutionDir)Tao3DCore\DXResources.cpp" />
+    <ClCompile Include="$(SolutionDir)Tao3DCore\MainWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Tao3DCore\Application.h">
-      <Filter>Tao3DCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Tao3DCore\Common.h">
-      <Filter>Tao3DCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Tao3DCore\DXResources.h">
-      <Filter>Tao3DCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Tao3DCore\IRender.h">
-      <Filter>Tao3DCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Tao3DCore\IWindow.h">
-      <Filter>Tao3DCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Tao3DCore\MainWindow.h">
-      <Filter>Tao3DCore</Filter>
-    </ClInclude>
     <ClInclude Include="Src\TriangleRender.h">
       <Filter>Src</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)Tao3DCore\Application.h" />
+    <ClInclude Include="$(SolutionDir)Tao3DCore\Common.h" />
+    <ClInclude Include="$(SolutionDir)Tao3DCore\DXResources.h" />
+    <ClInclude Include="$(SolutionDir)Tao3DCore\IRender.h" />
+    <ClInclude Include="$(SolutionDir)Tao3DCore\IWindow.h" />
+    <ClInclude Include="$(SolutionDir)Tao3DCore\MainWindow.h" />
+    <ClInclude Include="$(SolutionDir)Tao3DCore\IDeviceNotify.h">
+      <Filter>Tao3DCore</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

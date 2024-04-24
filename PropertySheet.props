@@ -21,4 +21,18 @@
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(SolutionDir)Tao3DCore\Application.cpp" />
+    <ClCompile Include="$(SolutionDir)Tao3DCore\DXResources.cpp" />
+    <ClCompile Include="$(SolutionDir)Tao3DCore\MainWindow.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(SolutionDir)Tao3DCore\Application.h" />
+    <ClInclude Include="$(SolutionDir)Tao3DCore\Common.h" />
+    <ClInclude Include="$(SolutionDir)Tao3DCore\DXResources.h" />
+    <ClInclude Include="$(SolutionDir)Tao3DCore\IRender.h" />
+    <ClInclude Include="$(SolutionDir)Tao3DCore\IWindow.h" />
+    <ClInclude Include="$(SolutionDir)Tao3DCore\IDeviceNotify.h" />
+    <ClInclude Include="$(SolutionDir)Tao3DCore\MainWindow.h" />
+  </ItemGroup>  
 </Project>

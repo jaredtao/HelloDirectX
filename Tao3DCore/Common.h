@@ -38,4 +38,16 @@ void ThrowIfFailed(HRESULT hr, T&& msg)
 		throw std::system_error { hr, std::system_category(), std::forward<T>(msg) };
 	}
 }
+
+template <typename T>
+void SafeRelease(T& resource)
+{
+	if (resource)
+	{
+		resource->Release();
+		resource = nullptr;
+	}
+}
+
+
 } // namespace Tao3D
